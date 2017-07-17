@@ -1,7 +1,8 @@
 // require express and other modules
 var express = require('express'),
     app = express(),
-    bodyParser = require('body-parser');
+    bodyParser = require('body-parser'),
+    db = require('./models');
 
 // configure bodyParser (for receiving form data)
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -44,11 +45,12 @@ app.get('/', function homepage(req, res) {
  */
 
 app.get('/api/todos/search', function search(req, res) {
-//  res.json(search);
-  /* This endpoint responds with the search results from the
-   * query in the request. COMPLETE THIS ENDPOINT LAST.
-   */
-
+  var searchTerm = req.query.q;
+  console.log(searchTerm);
+  var filteredTodos = todos.filter(function(todo){
+    return(todo.task.toLowerCase().includes(searchTerm.toLowerCase()) || todo.description.toLowerCase().includes(searchTerm.toLowerCase()));
+  });
+  res.json({data : filteredTodos});
 });
 
 app.get('/api/todos', function index(req, res) {
@@ -58,25 +60,25 @@ app.get('/api/todos', function index(req, res) {
 });
 
 app.post('/api/todos', function create(req, res) {
-  res.json({data: todos});
-   var newTodo = req.body;
+    var newTodo = req.body;
 
-   // set sequential id (last id in `todos` array + 1)
-    if (todos.length > 0) {
-      newTodo._id = todos[todos.length - 1]._id + 1;
-    } else {
-        newTodo._id = 1;
-      }
-
-    todos.push(newTodo);
-    // add newTodo to `todos` array
-
-    // send newTodo as JSON response
-    res.json(newTodo);
-
-  /* This endpoint will add a todo to our "database"
-   * and respond with the newly created todo.
-   */
+    // set sequential id (last id in `todos` array + 1)
+    // if (todos.length > 0) {
+    //   newTodo._id = todos[todos.length - 1]._id + 1;
+    // } else {
+    //   newTodo._id = 1;
+    // }
+    //
+    // // add newTodo to `todos` array
+    // todos.push(newTodo);
+    //
+    // // send newTodo as JSON response
+    // res.json(newTodo);
+    var todo = new db.Todo(newTodo);
+    todo.save(function(failureMessage, savedTodo){
+      console.log(failureMessage);
+      res.json(savedTodo);
+    });
 });
 
 app.get('/api/todos/:id', function show(req, res) {
@@ -91,51 +93,42 @@ app.get('/api/todos/:id', function show(req, res) {
 
     // send foundTodo as JSON response
     res.json(foundTodo);
-  /* This endpoint will return a single todo with the
-   * id specified in the route parameter (:id)
-   */
 });
 
 app.put('/api/todos/:id', function update(req, res) {
-  // get todo id from url params (`req.params`)
-  // var todoId = parseInt(req.params.id);
-  //
-  // // find todo to update by its id
-  // var todoToUpdate = todos.filter(function (todo) {
-  //   return todo._id == todoId;
-  // })[0];
-  //
-  // // update the todo's task
-  // todoToUpdate.task = req.body.task;
-  //
-  // // update the todo's description
-  // todoToUpdate.description = req.body.description;
+    //  get todo id from url params (`req.params`)
+    var todoId = parseInt(req.params.id);
 
-// res.json(todoToUpdate);
-  /* This endpoint will update a single todo with the
-   * id specified in the route parameter (:id) and respond
-   * with the newly updated todo.
-   */
+    // find todo to update by its id
+    var todoToUpdate = todos.filter(function (todo) {
+      return todo._id == todoId;
+    })[0];
+
+    // update the todo's task
+    todoToUpdate.task = req.body.task;
+
+    // update the todo's description
+    todoToUpdate.description = req.body.description;
+
+  res.json(todoToUpdate);
+
 });
 
 app.delete('/api/todos/:id', function destroy(req, res) {
-  // get todo id from url params (`req.params`)
-// var todoId = parseInt(req.params.id);
-//
-// // find todo to delete by its id
-// var todoToDelete = todos.filter(function (todo) {
-//   return todo._id == todoId;
-// })[0];
-//
-// // remove todo from `todos` array
-// todos.splice(todos.indexOf(todoToDelete), 1);
-//
-// // send back deleted todo
-// res.json(todoToDelete);
-  /* This endpoint will delete a single todo with the
-   * id specified in the route parameter (:id) and respond
-   * with success.
-   */
+  //get todo id from url params (`req.params`)
+    var todoId = parseInt(req.params.id);
+
+    // find todo to delete by its id
+    var todoToDelete = todos.filter(function (todo) {
+      return todo._id == todoId;
+    })[0];
+
+    // remove todo from `todos` array
+    todos.splice(todos.indexOf(todoToDelete), 1);
+
+    // send back deleted todo
+    res.json(todoToDelete);
+
 });
 
 /**********
